@@ -1,0 +1,32 @@
+# Segredos (nunca versionar)
+.env*
+!.env.example
+*.pem
+*.key
+
+# Banco de dados e dumps
+*.sql
+*.sqlite3
+*.dump
+
+# Terraform
+*.tfstate*
+.terraform/
+*.tfvars
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Python e Django
+__pycache__/
+*.pyc
+venv/
+.venv/
+media/
+
+# Editor e sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
