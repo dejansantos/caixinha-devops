@@ -40,10 +40,35 @@ Registro de cada sessão. Regras:
 
 **Fechamento**
 - Aprendi:
+  - Git local x GitHub: o repositório local é privado; publicar é o ponto sem volta, então as proteções vêm antes.
+  - `.gitignore` com exceção (`!.env.example`) e como testar com um `.env` falso.
+  - gitleaks na mão (`gitleaks detect`) e automático no commit via pre-commit.
+  - E-mail noreply do GitHub nos commits, para não expor o e-mail pessoal num repositório público.
+  - Na AWS, instância EC2 "interrompida" não cobra computação, mas RDS ligado cobra por hora mesmo sem uso; RDS parado volta sozinho em 7 dias.
+  - Proteção contra exclusão do RDS deixa "Excluir" desabilitado até ser desligada.
 - Por que escolhi assim:
+  - Git local primeiro, GitHub depois de gitleaks limpo, para nunca publicar segredo.
+  - Copiei só `caixinha_project/`, `core/`, `manage.py` e `requirements.txt` (sem `.env`, `dados.txt`, Dockerfile e compose antigos) para escrever o Dockerfile do zero na Sprint 1.
+  - Excluí o RDS e a EC2 de estudos antigos em vez de só parar, porque parar não elimina o custo.
 - O que quebrou (e como resolvi):
+  - `.gitignore` saiu com a palavra `gitignore` solta na linha 1 (sobra de copiar o bloco); apaguei a linha.
+  - `gitleaks` não era reconhecido logo após instalar; abri um PowerShell novo.
+  - `robocopy` deixou pastas `app/app` duplicadas; removi antes do commit.
+  - Achei um `dados.txt` com usuário e senha em texto puro no projeto original; não copiei. **Pendência:** apagar o arquivo original e trocar a senha, se ainda for usada.
+  - Fiz o push antes de ativar o 2FA; o gitleaks no histórico passou, mas a ordem correta é proteger a conta antes.
 - Pergunta de entrevista que consigo responder agora:
+  - Por que não publicar o repositório antes de rodar o gitleaks? Porque o histórico do Git guarda tudo; apagar o arquivo depois não remove o segredo do histórico.
 - Recursos AWS desligados? Custo do dia:
+  - Excluídos em Ohio (us-east-2): RDS `meu-database-1` e EC2 `servidor-01`; sem volumes, snapshots, IPs elásticos, chaves KMS próprias ou buckets S3 restantes. Glue não confirmado.
+  - Gasto antes da limpeza: US$ 4,11 no mês (1 a 9/out), previsão US$ 14,64; fatura em US$ 0,00 (créditos). Conferir o Cost Explorer em 1 ou 2 dias.
+
+**Concluído na Sprint 0**
+- [x] 2FA no GitHub; MFA no root e no IAM da AWS (informado); orçamento de US$ 10 no AWS Budgets
+- [x] Repositório local com `.gitignore`, `.env.example`, pre-commit com gitleaks
+- [x] Código do Caixinha copiado sem dados reais e publicado em github.com/dejansantos/caixinha-devops
+- [ ] Quadro no GitHub Projects com uma issue por história do backlog
+- [ ] Comando `seed_demo` com Faker
+- [ ] Conferir Glue e o Cost Explorer; apagar o `dados.txt` original e trocar a senha
 
 ---
 
