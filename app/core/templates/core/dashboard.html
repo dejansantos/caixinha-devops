@@ -1,0 +1,133 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 20px;">
+
+  {% if sem_ciclo %}
+    <div class="alert alert-warning">Nenhum ciclo cadastrado ainda. Crie um CicloAnual primeiro.</div>
+  {% else %}
+
+  <h1>Relatório — {{ ciclo.nome }}</h1>
+  <p class="text-muted">{{ ciclo.data_inicio|date:"d/m/Y" }} a {{ ciclo.data_fim|date:"d/m/Y" }} — Status: {{ ciclo.get_status_display }}</p>
+
+  <a href="{% url 'relatorio_geral_pdf' %}" class="btn btn-success mb-3">📄 Baixar PDF do Resumo Geral</a>
+
+  <div class="row">
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-primary">
+        <div class="card-body">
+          <div class="small">Capital das Cotas (pago)</div>
+          <div class="h4">R$ {{ resumo.capital_cotas_pago|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-warning">
+        <div class="card-body">
+          <div class="small">Capital das Cotas (pendente)</div>
+          <div class="h4">R$ {{ resumo.capital_cotas_pendente|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-success">
+        <div class="card-body">
+          <div class="small">Lucro Acumulado do Ciclo</div>
+          <div class="h4">R$ {{ resumo.lucro_total|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-dark">
+        <div class="card-body">
+          <div class="small">Saldo Total da Caixinha</div>
+          <div class="h4">R$ {{ resumo.saldo_total_caixinha|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <div class="card"><div class="card-body">
+        <div class="small text-muted">Lucro com Rifas (líquido)</div>
+        <div class="h5">R$ {{ resumo.rifa_liquida_total|floatformat:2 }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card"><div class="card-body">
+        <div class="small text-muted">Juros Recebidos (empréstimos quitados)</div>
+        <div class="h5">R$ {{ resumo.juros_recebidos|floatformat:2 }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card"><div class="card-body">
+        <div class="small text-muted">Rendimento de Investimentos</div>
+        <div class="h5">R$ {{ resumo.rendimento_investimentos|floatformat:2 }}</div>
+      </div></div>
+    </div>
+  </div>
+
+  <h3 class="mt-4">Rifas do Ciclo (arrecadação x saída do prêmio)</h3>
+  <table class="table table-striped table-bordered">
+    <thead class="thead-dark">
+      <tr>
+        <th>Rifa</th>
+        <th>Mês</th>
+        <th>Arrecadação bruta</th>
+        <th>Saída (prêmio)</th>
+        <th>Lucro líquido</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in rifas %}
+      <tr>
+        <td>{{ linha.rifa.titulo }}</td>
+        <td>{{ linha.rifa.mes_referencia|date:"m/Y" }}</td>
+        <td>R$ {{ linha.arrecadacao_bruta|floatformat:2 }}</td>
+        <td class="text-danger">- R$ {{ linha.custo_premio|floatformat:2 }}</td>
+        <td class="text-success"><strong>R$ {{ linha.lucro_liquido|floatformat:2 }}</strong></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-muted">Nenhuma rifa cadastrada ainda neste ciclo.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3 class="mt-4">Por Cotista ({{ resumo.qtd_cotistas_ativos }} ativos)</h3>
+  <table class="table table-striped table-bordered">
+    <thead class="thead-dark">
+      <tr>
+        <th>Cotista</th>
+        <th>Qtd cotas</th>
+        <th>Total pago</th>
+        <th>Total pendente</th>
+        <th>Extrato</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in cotistas %}
+      <tr>
+        <td>{{ linha.cotista.nome }}</td>
+        <td>{{ linha.qtd_cotas }}</td>
+        <td>R$ {{ linha.total_pago|floatformat:2 }}</td>
+        <td>
+          {% if linha.total_pendente > 0 %}
+            <span class="text-danger">R$ {{ linha.total_pendente|floatformat:2 }}</span>
+          {% else %}
+            <span class="text-success">R$ 0,00</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'extrato_cotista_html' linha.cotista.id %}" class="btn btn-sm btn-outline-secondary">Ver</a>
+          <a href="{% url 'extrato_cotista_pdf' linha.cotista.id %}" class="btn btn-sm btn-outline-primary">PDF</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% endif %}
+</div>
+{% endblock %}

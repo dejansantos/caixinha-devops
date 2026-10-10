@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 20px;">
+
+  <h1>Extrato — {{ cotista.nome }}</h1>
+  <p class="text-muted">Ciclo: {{ ciclo.nome }} ({{ ciclo.data_inicio|date:"d/m/Y" }} a {{ ciclo.data_fim|date:"d/m/Y" }})</p>
+
+  <a href="{% url 'extrato_cotista_pdf' cotista.id %}" class="btn btn-outline-secondary mb-3">📄 Baixar PDF</a>
+
+  <div class="card text-white bg-danger mb-4">
+    <div class="card-body">
+      <div class="small">TOTAL DEVIDO HOJE</div>
+      <div class="h2">R$ {{ total_devido_geral|floatformat:2 }}</div>
+      <div class="small">
+        Cotas pendentes: R$ {{ total_pendente|floatformat:2 }} &nbsp;|&nbsp;
+        Empréstimos pendentes: R$ {{ total_devido_emprestimos|floatformat:2 }} &nbsp;|&nbsp;
+        Rifas pendentes: R$ {{ total_devido_rifas|floatformat:2 }}
+      </div>
+    </div>
+  </div>
+
+  <h3>Cotas mensais</h3>
+  <table class="table table-sm table-bordered">
+    <thead class="thead-dark">
+      <tr><th>Mês</th><th>Valor</th><th>Pago?</th><th>Data pagamento</th></tr>
+    </thead>
+    <tbody>
+      {% for cota in cotas %}
+      <tr class="{% if not cota.pago %}table-warning{% endif %}">
+        <td>{{ cota.mes_referencia|date:"m/Y" }}</td>
+        <td>R$ {{ cota.valor|floatformat:2 }}</td>
+        <td>{% if cota.pago %}<span class="text-success">Sim</span>{% else %}<span class="text-danger">Não</span>{% endif %}</td>
+        <td>{{ cota.data_pagamento|date:"d/m/Y"|default:"-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3 class="mt-4">Empréstimos</h3>
+  {% if emprestimos_detalhados %}
+    {% for item in emprestimos_detalhados %}
+    <div class="card mb-3 {% if item.atrasado %}border-danger{% elif item.renegociado %}border-secondary{% endif %}">
+      <div class="card-body {% if item.renegociado %}bg-light{% endif %}">
+        <h5 class="{% if item.renegociado %}text-muted{% endif %}">
+          {{ item.emprestimo.data_emprestimo|date:"d/m/Y" }} —
+          Principal R$ {{ item.emprestimo.valor_principal|floatformat:2 }} —
+          Juros {{ item.emprestimo.taxa_juros }}% —
+          Total R$ {{ item.emprestimo.valor_total_com_juros|floatformat:2 }}
+          {% if item.renegociado %}
+            <span class="badge" style="background-color:#5a6268; color:#ffffff; font-weight:bold;">RENEGOCIADO - consolidado em outro empréstimo</span>
+          {% elif item.atrasado %}
+            <span class="badge badge-danger">ATRASADO</span>
+          {% else %}
+            <span class="badge badge-secondary">{{ item.emprestimo.get_status_display }}</span>
+          {% endif %}
+        </h5>
+        {% if item.emprestimo.observacoes %}
+          <p class="small font-italic">{{ item.emprestimo.observacoes }}</p>
+        {% endif %}
+        <p class="mb-2">
+          Parcelas: <strong>{{ item.qtd_pagas }}/{{ item.qtd_parcelas }}</strong> pagas
+          {% if item.qtd_atrasadas %}
+            — <span class="text-danger">{{ item.qtd_atrasadas }} atrasada(s)</span>
+          {% endif %}
+          — Pendente: <strong>R$ {{ item.valor_pendente|floatformat:2 }}</strong>
+        </p>
+        <table class="table table-sm table-bordered mb-0">
+          <thead>
+            <tr><th>#</th><th>Vencimento</th><th>Valor</th><th>Multa</th><th>Pago?</th></tr>
+          </thead>
+          <tbody>
+            {% for parcela in item.parcelas %}
+            <tr class="{% if not parcela.pago and parcela.vencimento < ciclo.data_fim %}table-light{% endif %}">
+              <td>{{ parcela.numero }}</td>
+              <td>{{ parcela.vencimento|date:"d/m/Y" }}</td>
+              <td>R$ {{ parcela.valor|floatformat:2 }}</td>
+              <td>{% if parcela.multa_valor %}R$ {{ parcela.multa_valor|floatformat:2 }}{% else %}-{% endif %}</td>
+              <td>{% if parcela.pago %}<span class="text-success">Sim</span>{% else %}<span class="text-danger">Não</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">Nenhum empréstimo registrado.</p>
+  {% endif %}
+
+  <h3 class="mt-4">Rifas mensais</h3>
+  <table class="table table-sm table-bordered">
+    <thead class="thead-dark">
+      <tr><th>Rifa</th><th>Valor</th><th>Situação</th></tr>
+    </thead>
+    <tbody>
+      {% for pr in rifas_pagamentos %}
+      <tr class="{% if not pr.pago %}table-warning{% endif %}">
+        <td>{{ pr.rifa.titulo }}</td>
+        <td>R$ {{ pr.valor|floatformat:2 }}</td>
+        <td>{% if pr.pago %}<span class="text-success">Pago</span>{% else %}<span class="text-danger">Pendente</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="text-muted">Nenhuma rifa registrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if rateio %}
+  <h3 class="mt-4">Rateio final do ciclo</h3>
+  <div class="card">
+    <div class="card-body">
+      <p>Capital das cotas devolvido: R$ {{ rateio.capital_cotas|floatformat:2 }}</p>
+      <p>Lucro distribuído: R$ {{ rateio.lucro_distribuido|floatformat:2 }}</p>
+      <p><strong>Saldo final a receber: R$ {{ rateio.saldo_final|floatformat:2 }}</strong></p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

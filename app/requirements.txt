@@ -1,0 +1,11 @@
+Django>=5.0,<5.1
+django-jazzmin>=3.0        # tema visual para o Django Admin
+psycopg2-binary>=2.9
+python-dateutil>=2.9
+django-otp>=1.5          # 2FA
+qrcode>=7.4               # QR code pro app autenticador
+django-dbbackup>=4.1      # backup automático do banco
+python-decouple>=3.8      # variáveis de ambiente (.env)
+gunicorn>=22.0             # servidor WSGI para produção na Homehost
+whitenoise>=6.6            # servir arquivos estáticos sem depender de Nginx configurado
+fpdf2>=2.7
